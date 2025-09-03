@@ -17,7 +17,7 @@ import {
 	SelectTrigger,
 	SelectValue,
 } from '@/components/ui/select';
-import { useVendors } from '@/services/vendorsApi';
+import { useVendors } from '@/hooks/useVendors';
 import type { CreateProductDto, UpdateProductDto } from '@/types/api';
 
 interface ProductFormProps {

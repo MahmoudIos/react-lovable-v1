@@ -21,13 +21,13 @@ import {
 	Pie,
 	Cell,
 } from 'recharts';
-import { useVendor } from '@/services/vendorsApi';
+import { useVendor } from '@/hooks/useVendors';
 import {
 	useProductsByVendor,
 	useCreateProduct,
 	useUpdateProduct,
 	useDeleteProduct,
-} from '@/services/productsApi';
+} from '@/hooks/useProducts';
 import { ProductForm } from '@/components/forms/product-form';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { useToast } from '@/hooks/use-toast';

@@ -4,6 +4,7 @@ import { TooltipProvider } from '@/components/ui/tooltip';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { ToastContainer } from 'react-toastify';
 import Landing from './pages/Landing';
 import Dashboard from './pages/Dashboard';
 import VendorDetails from './pages/VendorDetails';
@@ -17,6 +18,18 @@ const App = () => (
 		<TooltipProvider>
 			<Toaster />
 			<Sonner />
+			<ToastContainer 
+				position="top-right"
+				autoClose={5000}
+				hideProgressBar={false}
+				newestOnTop={false}
+				closeOnClick
+				rtl={false}
+				pauseOnFocusLoss
+				draggable
+				pauseOnHover
+				theme="light"
+			/>
 			<BrowserRouter>
 				<Routes>
 					<Route path="/" element={<Landing />} />

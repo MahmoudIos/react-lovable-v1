@@ -25,7 +25,7 @@ import {
 	useApproveProduct,
 	useUpdateProduct,
 	useDeleteProduct,
-} from '@/services/productsApi';
+} from '@/hooks/useProducts';
 import { ProductForm } from '@/components/forms/product-form';
 import { AssessmentAnalysisModal } from '@/components/forms/assessment-analysis-modal';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';

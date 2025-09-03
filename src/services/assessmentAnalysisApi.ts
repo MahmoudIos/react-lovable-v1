@@ -1,5 +1,8 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { useApi } from '@/hooks/useApi';
+import api from '@/api/api';
+import { endpoints } from '@/api/endpoints';
+import { handleApiResponse, handleApiError } from '@/utils/toastHandler';
+import type { ApiResponseDto } from '@/types/apiResponse';
 import type {
 	AnalyzeAssessmentRequestDto,
 	AssessmentAnalysisResultDto,
@@ -25,14 +28,12 @@ export const assessmentAnalysisKeys = {
 
 // API Functions
 export const useAssessmentAnalysisApi = () => {
-	const { apiPublic, apiPrivate } = useApi();
-
 	const analyzeAssessment = async (
 		assessmentId: string,
 		data: AnalyzeAssessmentRequestDto
-	): Promise<AssessmentAnalysisResultDto> => {
-		const response = await apiPrivate.post(
-			`/api/v1/assessmentanalysis/${assessmentId}/analyze`,
+	): Promise<ApiResponseDto<AssessmentAnalysisResultDto>> => {
+		const response = await api.post<ApiResponseDto<AssessmentAnalysisResultDto>>(
+			endpoints.assessmentAnalysis.analyze(assessmentId),
 			data
 		);
 		return response.data;
@@ -40,9 +41,9 @@ export const useAssessmentAnalysisApi = () => {
 
 	const getAssessmentResults = async (
 		assessmentId: string
-	): Promise<AssessmentResultsDto> => {
-		const response = await apiPublic.get(
-			`/api/v1/assessmentanalysis/${assessmentId}/results`
+	): Promise<ApiResponseDto<AssessmentResultsDto>> => {
+		const response = await api.get<ApiResponseDto<AssessmentResultsDto>>(
+			endpoints.assessmentAnalysis.results(assessmentId)
 		);
 		return response.data;
 	};
@@ -50,19 +51,19 @@ export const useAssessmentAnalysisApi = () => {
 	const getNotImplementedItems = async (
 		assessmentId: string,
 		scoreThreshold?: number
-	): Promise<NotImplementedItemsDto> => {
-		const url = `/api/v1/assessmentanalysis/${assessmentId}/not-implemented`;
+	): Promise<ApiResponseDto<NotImplementedItemsDto>> => {
+		const url = endpoints.assessmentAnalysis.notImplemented(assessmentId);
 		const params = scoreThreshold ? `?scoreThreshold=${scoreThreshold}` : '';
-		const response = await apiPublic.get(`${url}${params}`);
+		const response = await api.get<ApiResponseDto<NotImplementedItemsDto>>(`${url}${params}`);
 		return response.data;
 	};
 
 	const updateItemStatuses = async (
 		assessmentId: string,
 		data: UpdateStatusRequestDto
-	): Promise<StatusUpdateResultDto> => {
-		const response = await apiPrivate.post(
-			`/api/v1/assessmentanalysis/${assessmentId}/update-status`,
+	): Promise<ApiResponseDto<StatusUpdateResultDto>> => {
+		const response = await api.post<ApiResponseDto<StatusUpdateResultDto>>(
+			endpoints.assessmentAnalysis.updateStatus(assessmentId),
 			data
 		);
 		return response.data;
@@ -83,6 +84,7 @@ export const useAssessmentResults = (assessmentId: string) => {
 	return useQuery({
 		queryKey: assessmentAnalysisKeys.results(assessmentId),
 		queryFn: () => getAssessmentResults(assessmentId),
+		select: (response) => response.data,
 		enabled: !!assessmentId,
 		staleTime: 5 * 60 * 1000, // 5 minutes
 	});
@@ -100,6 +102,7 @@ export const useNotImplementedItems = (
 			scoreThreshold
 		),
 		queryFn: () => getNotImplementedItems(assessmentId, scoreThreshold),
+		select: (response) => response.data,
 		enabled: !!assessmentId,
 		staleTime: 5 * 60 * 1000, // 5 minutes
 	});
@@ -117,14 +120,18 @@ export const useAnalyzeAssessment = () => {
 			assessmentId: string;
 			data: AnalyzeAssessmentRequestDto;
 		}) => analyzeAssessment(assessmentId, data),
-		onSuccess: (_, { assessmentId }) => {
-			// Invalidate all related queries
-			queryClient.invalidateQueries({
-				queryKey: assessmentAnalysisKeys.results(assessmentId),
-			});
-			queryClient.invalidateQueries({
-				queryKey: assessmentAnalysisKeys.notImplemented(assessmentId),
-			});
+		onSuccess: (response, { assessmentId }) => {
+			if (handleApiResponse(response, { successMessage: 'Assessment analysis completed successfully' })) {
+				queryClient.invalidateQueries({
+					queryKey: assessmentAnalysisKeys.results(assessmentId),
+				});
+				queryClient.invalidateQueries({
+					queryKey: assessmentAnalysisKeys.notImplemented(assessmentId),
+				});
+			}
+		},
+		onError: (error: any) => {
+			handleApiError(error, 'Failed to analyze assessment');
 		},
 	});
 };
@@ -141,14 +148,18 @@ export const useUpdateItemStatuses = () => {
 			assessmentId: string;
 			data: UpdateStatusRequestDto;
 		}) => updateItemStatuses(assessmentId, data),
-		onSuccess: (_, { assessmentId }) => {
-			// Invalidate all related queries
-			queryClient.invalidateQueries({
-				queryKey: assessmentAnalysisKeys.results(assessmentId),
-			});
-			queryClient.invalidateQueries({
-				queryKey: assessmentAnalysisKeys.notImplemented(assessmentId),
-			});
+		onSuccess: (response, { assessmentId }) => {
+			if (handleApiResponse(response, { successMessage: 'Item statuses updated successfully' })) {
+				queryClient.invalidateQueries({
+					queryKey: assessmentAnalysisKeys.results(assessmentId),
+				});
+				queryClient.invalidateQueries({
+					queryKey: assessmentAnalysisKeys.notImplemented(assessmentId),
+				});
+			}
+		},
+		onError: (error: any) => {
+			handleApiError(error, 'Failed to update item statuses');
 		},
 	});
 };
